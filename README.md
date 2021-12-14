@@ -19,8 +19,8 @@ You will complete the following tasks and do any extra wiring and package instal
 Write the following user access functions inside `api/users/users-model.js`:
 
 - [x] `find`
-- [ ] `findBy`
-- [ ] `findById`
+- [x] `findBy`
+- [x] `findById`
 
 #### 2B - Middleware Functions
 

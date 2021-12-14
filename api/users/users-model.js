@@ -44,7 +44,12 @@ async function findBy(filter) {
    */
 }
 
-function findById(user_id) {
+async function findById(user_id) {
+  const user = await db("users as u")
+    .select("u.user_id", "u.username", "r.role_name")
+    .join("roles as r", "u.role_id", "=", "r.role_id")
+    .where({ user_id })
+  return user
   /**
     You will need to join two tables.
     Resolves to the user with the given user_id.
