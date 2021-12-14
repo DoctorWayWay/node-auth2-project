@@ -24,7 +24,11 @@ async function find() {
    */
 }
 
-function findBy(filter) {
+async function findBy(filter) {
+  return await db("users as u")
+    .select("u.user_id", "u.username", "u.password", "r.role_name")
+    .join("roles as r", "u.role_id", "=", "r.role_id")
+    .where(filter)
   /**
     You will need to join two tables.
     Resolves to an ARRAY with all users that match the filter condition.
