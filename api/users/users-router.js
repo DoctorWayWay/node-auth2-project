@@ -17,7 +17,7 @@ const { restricted, only } = require("../auth/auth-middleware.js");
     }
   ]
  */
-router.get("/", async (req, res, next) => { // done for you
+router.get("/", restricted, async (req, res, next) => { // done for you
   await Users.find()
     .then(users => {
       res.json(users);
