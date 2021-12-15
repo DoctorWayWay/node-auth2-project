@@ -1,8 +1,6 @@
 const jwt = require('jsonwebtoken')
 const { JWT_SECRET } = require("../secrets"); // use this secret!
-const {
-  findBy
-} = require("../users/users-model")
+const Users = require("../users/users-model")
 
 const restricted = (req, res, next) => {
   const token = req.headers.authorization
@@ -40,7 +38,7 @@ const restricted = (req, res, next) => {
 }
 
 const only = role_name => (req, res, next) => {
-  if (req.decodedJwt.role_name === role_name) {
+  if (req.decodedJWT.role_name === role_name) {
     return next()
   } else {
     return next({
@@ -61,13 +59,15 @@ const only = role_name => (req, res, next) => {
 }
 
 
-const checkUsernameExists = (req, res, next) => {
-  if (!req.body.username) {
+const checkUsernameExists = async (req, res, next) => {
+  const [existingUser] = await Users.findBy({ username: req.body.username })
+  if (!existingUser) {
     return next({
       status: 401,
-      message: "Invalid  credentials"
+      message: "Invalid credentials"
     })
   } else {
+    req.user = existingUser
     return next()
   }
   /*
@@ -82,52 +82,50 @@ const checkUsernameExists = (req, res, next) => {
 
 const validateRoleName = async (req, res, next) => {
   const { role_name } = req.body
-  const [validRoleName] = await findBy({ role_name: role_name })
-  if (validRoleName) {
-    role_name.trim()
-    return next()
-  }
+
+  // Account for empty role_name edge case
   if (!role_name || role_name.trim() === "") {
     req.role_name = "student"
     return next()
+  } else {
+    req.role_name = role_name.trim()
   }
-  if (role_name.trim() === "admin") {
+
+  // Check if role name is valid
+  if (req.role_name === "admin") {
     return next({
       status: 422,
       message: "Role name can not be admin"
     })
   }
-  if (role_name.trim().length > 32) {
+  if (req.role_name.length > 32) {
     return next({
       status: 422,
       message: "Role name can not be longer than 32 chars"
     })
   }
-  if (!validRoleName) {
-    return next({
-      status: 400,
-      message: "Invalid role name"
-    })
-  }
-  /*
-    If the role_name in the body is valid, set req.role_name to be the trimmed string and proceed.
 
-    If role_name is missing from req.body, or if after trimming it is just an empty string,
-    set req.role_name to be 'student' and allow the request to proceed.
-
-    If role_name is 'admin' after trimming the string:
-    status 422
-    {
-      "message": "Role name can not be admin"
-    }
-
-    If role_name is over 32 characters after trimming the string:
-    status 422
-    {
-      "message": "Role name can not be longer than 32 chars"
-    }
-  */
+  return next()
 }
+
+/*
+  If the role_name in the body is valid, set req.role_name to be the trimmed string and proceed.
+
+  If role_name is missing from req.body, or if after trimming it is just an empty string,
+  set req.role_name to be 'student' and allow the request to proceed.
+
+  If role_name is 'admin' after trimming the string:
+  status 422
+  {
+    "message": "Role name can not be admin"
+  }
+
+  If role_name is over 32 characters after trimming the string:
+  status 422
+  {
+    "message": "Role name can not be longer than 32 chars"
+  }
+*/
 
 module.exports = {
   restricted,
